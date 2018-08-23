@@ -63,7 +63,7 @@ public class MavenS3Plugin implements Plugin<Project> {
 		});
 	}
 
-	public void configureCredentials(ArtifactRepository repository, DefaultAwsCredentials credentials) {
+	private void configureCredentials(ArtifactRepository repository, DefaultAwsCredentials credentials) {
 
 		// Ignore except Maven repository
 		if (!(repository instanceof DefaultMavenArtifactRepository)) {
