@@ -1,0 +1,36 @@
+plugins {
+    id 'java-gradle-plugin'
+}
+
+apply plugin: 'maven'
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+group = 'com.github.yuki-0710'
+version = '1.0.0'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'com.amazonaws:aws-java-sdk-sts:[1.11,2.0)'
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: uri(getProperty('github.repository.path')))
+        }
+    }
+}
+
+gradlePlugin {
+    plugins {
+        greetingsPlugin {
+            id = 'com.github.yuki-0710.maven-s3'
+            implementationClass = 'com.github.yuki_0710.MavenS3Plugin'
+        }
+    }
+}
