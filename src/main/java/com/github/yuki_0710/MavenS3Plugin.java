@@ -17,6 +17,7 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.internal.credentials.DefaultAwsCredentials;
 
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSSessionCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 
@@ -132,11 +133,16 @@ public class MavenS3Plugin implements Plugin<Project> {
 		return credentials;
 	}
 
-	private static DefaultAwsCredentials createGradleCredentials(AWSCredentials credentials) {
+	private DefaultAwsCredentials createGradleCredentials(AWSCredentials credentials) {
 
 		DefaultAwsCredentials gradleCredentials = new DefaultAwsCredentials();
 		gradleCredentials.setAccessKey(credentials.getAWSAccessKeyId());
 		gradleCredentials.setSecretKey(credentials.getAWSSecretKey());
+
+		if (credentials instanceof AWSSessionCredentials) {
+			AWSSessionCredentials sessionCredentials = (AWSSessionCredentials) credentials;
+			gradleCredentials.setSessionToken(sessionCredentials.getSessionToken());
+		}
 
 		return gradleCredentials;
 	}
