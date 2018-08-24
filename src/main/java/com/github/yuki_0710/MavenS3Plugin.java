@@ -38,18 +38,18 @@ public class MavenS3Plugin implements Plugin<Project> {
 
 		logger = project.getLogger();
 
-		project.getAllprojects().forEach(this::applyToSubproject);
+		project.getAllprojects().forEach(this::applyToProject);
 	}
 
 
-	private void applyToSubproject(Project subproject) {
+	private void applyToProject(Project project) {
 
-		subproject.afterEvaluate(target -> {
+		project.afterEvaluate(target -> {
 
 			DefaultAwsCredentials credentials = getCredentials(target);
 
 			if (logger.isInfoEnabled()) {
-				logger.info(subproject.getName() + " uses " + credentials.getAccessKey());
+				logger.info(project.getName() + " uses " + credentials.getAccessKey());
 			}
 
 			// Apply to repositories
