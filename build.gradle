@@ -15,8 +15,7 @@ repositories {
 }
 
 dependencies {
-    implementation platform("com.amazonaws:aws-java-sdk-bom:1.11.613")
-    implementation "com.amazonaws:aws-java-sdk-sts"
+    compile "com.amazonaws:aws-java-sdk-sts:1.11.613"
 }
 
 uploadArchives {
