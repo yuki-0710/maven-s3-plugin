@@ -1,21 +1,22 @@
 package com.github.yuki_0710;
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSSessionCredentials;
+import java.lang.reflect.Method;
 import java.net.URI;
-
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
+import org.gradle.api.credentials.Credentials;
 import org.gradle.api.internal.artifacts.repositories.DefaultMavenArtifactRepository;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.provider.Property;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.internal.credentials.DefaultAwsCredentials;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSSessionCredentials;
-
 /**
  * Gradle plugin for Maven Repository built in S3.
- * 
+ *
  * @author yuki-0710
  */
 public class MavenS3Plugin implements Plugin<Project> {
@@ -71,7 +72,7 @@ public class MavenS3Plugin implements Plugin<Project> {
         }
 
         // Ignore configured Maven repository
-        if (mavenRepository.getConfiguredCredentials() != null) {
+        if (credentialsExists(mavenRepository)) {
             return;
         }
 
@@ -95,5 +96,43 @@ public class MavenS3Plugin implements Plugin<Project> {
         }
 
         return gradleCredentials;
+    }
+
+    // This is a shim to work around an incompatible API change in Gradle 6.6. Prior to that,
+    // AbstractAuthenticationSupportedRepository#getConfiguredCredentials() returned a (possibly null)
+    // Credentials object. In 6.6, it changed to return Property<Credentials>.
+    //
+    // Compiling this plugin against Gradle 6.5 results in a NoSuchMethodException if you run it under
+    // Gradle 6.6. The same thing happens if you compile against 6.6 and run it in 6.5.
+    //
+    // So we have to use reflection to inspect the return type.
+    //
+    // original code: https://github.com/GoogleCloudPlatform/artifact-registry-maven-tools/pull/37/files#diff-3b482c6e06ded4ee89fb6d111b49b2452ab4625978eb29a93063deee1cab8f52R164
+    private boolean credentialsExists(final DefaultMavenArtifactRepository repo) {
+        try {
+            final Method getConfiguredCredentials = DefaultMavenArtifactRepository.class
+                .getMethod("getConfiguredCredentials");
+
+            if (getConfiguredCredentials.getReturnType().equals(Credentials.class)) {
+                // This is for Gradle < 6.6. Once we no longer support versions of Gradle before 6.6
+                final Credentials existingCredentials =
+                    (Credentials) getConfiguredCredentials.invoke(repo);
+                return existingCredentials != null;
+            }
+
+            if (getConfiguredCredentials.getReturnType().equals(Property.class)) {
+                // for Gradle >= 6.6
+                final Property<?> existingCredentials =
+                    (Property<?>) getConfiguredCredentials.invoke(repo);
+                return existingCredentials.isPresent();
+            }
+
+            logger.warn("Error determining Gradle credentials API; expect authentication errors");
+            return false;
+        } catch (ReflectiveOperationException e) {
+			logger.warn(
+				"Error determining Gradle credentials API; expect authentication errors", e);
+            return false;
+        }
     }
 }

@@ -2,26 +2,26 @@ plugins {
     id "java-gradle-plugin"
 }
 
-apply plugin: "maven"
+apply plugin: "maven-publish"
 
 sourceCompatibility = "1.8"
 targetCompatibility = "1.8"
 
 group = "com.github.yuki-0710"
-version = "2.0.0"
+version = "2.0.1-SNAPSHOT"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    compile "com.amazonaws:aws-java-sdk-sts:1.11.613"
+    implementation "com.amazonaws:aws-java-sdk-sts:1.11.613"
 }
 
-uploadArchives {
+publishing {
     repositories {
-        mavenDeployer {
-            repository(url: uri(getProperty("github.repository.path")))
+        maven {
+            url = uri(getProperty("github.repository.path"))
         }
     }
 }
